@@ -1,0 +1,51 @@
+name: Monitor TDLC
+
+on:
+  schedule:
+    # Corre cada 20 minutos, de lunes a viernes, entre 8:00 y 20:00 hora Chile
+    # GitHub usa UTC. Chile en invierno es UTC-4, en verano UTC-3.
+    # Este horario cubre 12:00–00:00 UTC (8:00–20:00 Chile invierno).
+    - cron: '0,20,40 12-23 * * 1-5'
+  workflow_dispatch:  # permite ejecutarlo manualmente desde GitHub con un clic
+
+jobs:
+  revisar:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Descargar código
+        uses: actions/checkout@v4
+
+      # Recuperar el estado de la ejecución anterior (escritos ya vistos)
+      - name: Restaurar estado previo
+        uses: actions/cache@v4
+        with:
+          path: estado_escritos.json
+          key: estado-escritos-${{ runner.os }}
+          restore-keys: estado-escritos-
+
+      - name: Instalar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Instalar dependencias
+        run: |
+          pip install -r requirements.txt
+          playwright install chromium
+          playwright install-deps chromium
+
+      - name: Ejecutar bot
+        env:
+          EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
+          GMAIL_PASSWORD: ${{ secrets.GMAIL_PASSWORD }}
+          EMAIL_TO_DEFAULT: ${{ secrets.EMAIL_TO_DEFAULT }}
+        run: python monitor_causas.py
+
+      # Guardar el estado actualizado para la próxima ejecución
+      - name: Guardar estado actualizado
+        uses: actions/cache/save@v4
+        if: always()
+        with:
+          path: estado_escritos.json
+          key: estado-escritos-${{ runner.os }}-${{ github.run_id }}
