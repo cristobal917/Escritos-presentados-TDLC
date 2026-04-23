@@ -2,11 +2,8 @@ name: Monitor TDLC
 
 on:
   schedule:
-    # Corre cada 20 minutos, de lunes a viernes, entre 8:00 y 20:00 hora Chile
-    # GitHub usa UTC. Chile en invierno es UTC-4, en verano UTC-3.
-    # Este horario cubre 12:00–00:00 UTC (8:00–20:00 Chile invierno).
     - cron: '0,20,40 12-23 * * 1-5'
-  workflow_dispatch:  # permite ejecutarlo manualmente desde GitHub con un clic
+  workflow_dispatch:
 
 jobs:
   revisar:
@@ -16,7 +13,6 @@ jobs:
       - name: Descargar código
         uses: actions/checkout@v4
 
-      # Recuperar el estado de la ejecución anterior (escritos ya vistos)
       - name: Restaurar estado previo
         uses: actions/cache@v4
         with:
@@ -40,9 +36,13 @@ jobs:
           EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
           GMAIL_PASSWORD: ${{ secrets.GMAIL_PASSWORD }}
           EMAIL_TO_DEFAULT: ${{ secrets.EMAIL_TO_DEFAULT }}
+          # ── Un secret por cada causa que tenga lista propia ──
+          # El nombre siempre es EMAIL_TO_ seguido del idCausa
+          EMAIL_TO_42572: ${{ secrets.EMAIL_TO_42572 }}
+          EMAIL_TO_42509: ${{ secrets.EMAIL_TO_42509 }}
+          # Si una causa no aparece aquí, usará EMAIL_TO_DEFAULT
         run: python monitor_causas.py
 
-      # Guardar el estado actualizado para la próxima ejecución
       - name: Guardar estado actualizado
         uses: actions/cache/save@v4
         if: always()
