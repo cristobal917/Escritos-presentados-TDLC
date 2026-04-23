@@ -72,9 +72,10 @@ def cargar_causas():
     return json.loads(CAUSAS_FILE.read_text(encoding="utf-8"))
 
 def destinatarios_para(causa):
-    emails = causa.get("emails")
-    if emails and isinstance(emails, list) and len(emails) > 0:
-        return emails
+    secret_name = f"EMAIL_TO_{causa['idCausa']}"
+    valor = os.environ.get(secret_name, "").strip()
+    if valor:
+        return [e.strip() for e in valor.split(",") if e.strip()]
     return EMAIL_TO_DEFAULT
 
 # ── Scraping ──────────────────────────────────────────────────────────────────
