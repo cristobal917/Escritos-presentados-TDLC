@@ -9,16 +9,14 @@ jobs:
   revisar:
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: write  # necesario para hacer commit del estado
+
     steps:
       - name: Descargar código
         uses: actions/checkout@v4
-
-      - name: Restaurar estado previo
-        uses: actions/cache@v4
         with:
-          path: estado_escritos.json
-          key: estado-escritos-${{ runner.os }}
-          restore-keys: estado-escritos-
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Instalar Python
         uses: actions/setup-python@v5
@@ -51,13 +49,14 @@ jobs:
           EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
           GMAIL_PASSWORD: ${{ secrets.GMAIL_PASSWORD }}
           EMAIL_TO_DEFAULT: ${{ secrets.EMAIL_TO_DEFAULT }}
-          EMAIL_TO_42445: ${{ secrets.EMAIL_TO_42445 }}
+          EMAIL_TO_42572: ${{ secrets.EMAIL_TO_42572 }}
           EMAIL_TO_42509: ${{ secrets.EMAIL_TO_42509 }}
         run: python monitor_causas.py
 
-      - name: Guardar estado actualizado
-        uses: actions/cache/save@v4
-        if: always()
-        with:
-          path: estado_escritos.json
-          key: estado-escritos-${{ runner.os }}-${{ github.run_id }}
+      - name: Guardar estado en el repositorio
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add estado_escritos.json
+          git diff --staged --quiet || git commit -m "bot: actualiza estado escritos [skip ci]"
+          git push
