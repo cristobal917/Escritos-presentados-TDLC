@@ -51,7 +51,7 @@ jobs:
           EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
           GMAIL_PASSWORD: ${{ secrets.GMAIL_PASSWORD }}
           EMAIL_TO_DEFAULT: ${{ secrets.EMAIL_TO_DEFAULT }}
-          EMAIL_TO_42572: ${{ secrets.EMAIL_TO_42572 }}
+          EMAIL_TO_42445: ${{ secrets.EMAIL_TO_42445 }}
           EMAIL_TO_42509: ${{ secrets.EMAIL_TO_42509 }}
         run: python monitor_causas.py
 
