@@ -5,7 +5,7 @@ on:
     # Cada 20 min, lunes a sábado, 13:00–23:40 UTC (09:00–19:40 Chile invierno UTC-4)
     - cron: '0,20,40 13-23 * * 1-6'
     # Cada 20 min, lunes a sábado, 00:00–03:40 UTC (20:00–23:40 Chile invierno UTC-4)
-    - cron: '0,20,40 0-3 * * 2-7'
+    - cron: '0,20,40 0-3 * * 2-6'
   workflow_dispatch:
 
 jobs:
