@@ -2,10 +2,8 @@ name: Monitor TDLC
 
 on:
   schedule:
-    # Cada 20 min, lunes a sábado, 13:00–23:40 UTC (09:00–19:40 Chile invierno UTC-4)
-    - cron: '0,20,40 13-23 * * 1-6'
-    # Cada 20 min, lunes a sábado, 00:00–03:40 UTC (20:00–23:40 Chile invierno UTC-4)
-    - cron: '0,20,40 0-3 * * 2-6'
+    # Arranca el ciclo cada mañana a las 13:00 UTC (09:00 Chile invierno)
+    - cron: '0 13 * * 1-6'
   workflow_dispatch:
 
 jobs:
@@ -13,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
 
     permissions:
-      contents: write  # necesario para hacer commit del estado
+      contents: write
 
     steps:
       - name: Descargar código
@@ -52,8 +50,7 @@ jobs:
           EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
           GMAIL_PASSWORD: ${{ secrets.GMAIL_PASSWORD }}
           EMAIL_TO_DEFAULT: ${{ secrets.EMAIL_TO_DEFAULT }}
-          EMAIL_TO_42572: ${{ secrets.EMAIL_TO_42572 }}
-          EMAIL_TO_42509: ${{ secrets.EMAIL_TO_42509 }}
+          EMAIL_TO_CAUSAS: ${{ secrets.EMAIL_TO_CAUSAS }}
         run: python monitor_causas.py
 
       - name: Guardar estado en el repositorio
@@ -63,3 +60,28 @@ jobs:
           git add estado_escritos.json
           git diff --staged --quiet || git commit -m "bot: actualiza estado escritos [skip ci]"
           git push
+
+      # ── Relanzamiento automático cada 5 minutos ──────────────────────────
+      # Calcula si todavía estamos dentro del horario (antes de las 03:50 UTC)
+      # y si es así, espera 5 minutos y lanza una nueva ejecución del workflow.
+      - name: Relanzar en 5 minutos si sigue en horario
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          HORA_UTC=$(date -u +%H)
+          DIA_UTC=$(date -u +%u)  # 1=lunes ... 6=sábado
+          # Horario: lunes–sábado, 13:00–03:59 UTC (cruza medianoche)
+          EN_HORARIO=false
+          if [ "$DIA_UTC" -ge 1 ] && [ "$DIA_UTC" -le 6 ]; then
+            if [ "$HORA_UTC" -ge 13 ] || [ "$HORA_UTC" -le 3 ]; then
+              EN_HORARIO=true
+            fi
+          fi
+          if [ "$EN_HORARIO" = "true" ]; then
+            echo "Dentro de horario — relanzando en 5 minutos..."
+            sleep 300
+            gh workflow run monitor.yml --repo "$REPO"
+          else
+            echo "Fuera de horario — no se relanza."
+          fi
