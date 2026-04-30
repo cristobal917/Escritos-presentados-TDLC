@@ -72,10 +72,20 @@ def cargar_causas():
     return json.loads(CAUSAS_FILE.read_text(encoding="utf-8"))
 
 def destinatarios_para(causa):
-    secret_name = f"EMAIL_TO_{causa['idCausa']}"
-    valor = os.environ.get(secret_name, "").strip()
-    if valor:
-        return [e.strip() for e in valor.split(",") if e.strip()]
+    """
+    Lee EMAIL_TO_CAUSAS, que es un JSON con este formato:
+      {"42572": ["a@mail.cl", "b@mail.cl"], "42509": ["c@mail.cl"]}
+    Si el idCausa no aparece, usa EMAIL_TO_DEFAULT.
+    """
+    raw = os.environ.get("EMAIL_TO_CAUSAS", "").strip()
+    if raw:
+        try:
+            mapa = json.loads(raw)
+            key = str(causa["idCausa"])
+            if key in mapa and mapa[key]:
+                return mapa[key]
+        except Exception as e:
+            log(f"⚠️ Error leyendo EMAIL_TO_CAUSAS: {e}")
     return EMAIL_TO_DEFAULT
 
 # ── Scraping ──────────────────────────────────────────────────────────────────
