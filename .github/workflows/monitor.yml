@@ -66,12 +66,11 @@ jobs:
       # y si es así, espera 5 minutos y lanza una nueva ejecución del workflow.
       - name: Relanzar en 5 minutos si sigue en horario
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.PAT_WORKFLOW }}
           REPO: ${{ github.repository }}
         run: |
           HORA_UTC=$(date -u +%H)
-          DIA_UTC=$(date -u +%u)  # 1=lunes ... 6=sábado
-          # Horario: lunes–sábado, 13:00–03:59 UTC (cruza medianoche)
+          DIA_UTC=$(date -u +%u)
           EN_HORARIO=false
           if [ "$DIA_UTC" -ge 1 ] && [ "$DIA_UTC" -le 6 ]; then
             if [ "$HORA_UTC" -ge 13 ] || [ "$HORA_UTC" -le 3 ]; then
